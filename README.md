@@ -1,0 +1,1 @@
+# ASPNetCore6Random
