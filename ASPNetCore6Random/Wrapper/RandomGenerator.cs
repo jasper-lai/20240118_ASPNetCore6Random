@@ -2,7 +2,7 @@
 {
     public class RandomGenerator : IRandomGenerator
     {
-        private readonly Random _random = new Random();
+        private readonly Random _random = new();
 
         public int Next() => _random.Next();
         public int Next(int maxValue) => _random.Next(maxValue);

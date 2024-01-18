@@ -39,7 +39,7 @@ public interface IRandomGenerator
 // 實作介面
 public class RandomGenerator : IRandomGenerator
 {
-	private readonly Random _random = new Random();
+	private readonly Random _random = new();
 
 	public int Next() => _random.Next();
 	public int Next(int maxValue) => _random.Next(maxValue);
@@ -47,4 +47,99 @@ public class RandomGenerator : IRandomGenerator
 	public double NextDouble() => _random.NextDouble();
 }
 ```
+
+### 步驟_3: 加入 LottoController, LottoService, LottoViewModel, Lotto/Index.cshtml, 以處理樂透開獎的功能.
+
+```csharp
+// 建立 LottoController
+public class LottoController : Controller
+{
+	private readonly ILottoService _lottoService;
+
+	public LottoController(ILottoService lottoService)
+	{
+		_lottoService = lottoService;
+	}
+
+	public IActionResult Index()
+	{
+		var result = _lottoService.Lottoing();
+		return View(result);
+	}
+}
+```
+
+```csharp
+// 定義 ILottoService 介面
+public interface ILottoService
+{
+	LottoViewModel Lottoing();
+}
+
+// 實作 ILottoService 介面
+public class LottoService : ILottoService
+{
+	private readonly IRandomGenerator _randomGenerator;
+
+	public LottoService(IRandomGenerator randomGenerator) 
+	{
+		_randomGenerator = randomGenerator;
+	}
+
+	public LottoViewModel Lottoing()
+	{
+		var result = new LottoViewModel();
+
+		// Random(min, max): 含下界, 不含上界
+		var yourNumber = _randomGenerator.Next(0, 10);
+		var message = (yourNumber == 9) ? "恭喜中獎" : "再接再厲";
+
+		result.YourNumber = yourNumber;
+		result.Message = message;
+
+		return result;
+	}
+}
+```
+
+```html
+<!-- Index.cshtml  -->
+@model  ASPNetCore6Random.ViewModels.LottoViewModel
+
+@{
+    ViewData["Title"] = "樂透開奬結果";
+}
+
+<h1>樂透開奬結果</h1>
+
+<h3>您的號碼: @Model.YourNumber </h3>
+<h3> @Model.Message </h3>
+```
+
+### 步驟_4: 修訂 _Layout.cshtml, 掛上 樂透開獎 至選單.
+
+```html
+<li class="nav-item">
+	<a class="nav-link text-dark" asp-area="" asp-controller="Lotto" asp-action="Index">樂透開獎</a>
+</li>
+```
+
+### 步驟_5:  將相關的 service 或功能, 註冊至 DI
+
+```csharp
+#region 註冊相關的服務
+builder.Services.AddSingleton<IRandomGenerator, RandomGenerator>();
+builder.Services.AddScoped<ILottoService, LottoService>();
+#endregion
+```
+
+### 步驟_6: 確認一下執行的結果
+* 未中獎 
+  * ![NotGot](pictures/01-NotGot.png)   
+* 中獎 
+  * ![Got](pictures/02-Got.png)   
+
+
+
+
 

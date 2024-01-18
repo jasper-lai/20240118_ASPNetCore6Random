@@ -1,7 +1,15 @@
+using ASPNetCore6Random.Services;
+using ASPNetCore6Random.Wrapper;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+#region 註冊相關的服務
+builder.Services.AddSingleton<IRandomGenerator, RandomGenerator>();
+builder.Services.AddScoped<ILottoService, LottoService>();
+#endregion
 
 var app = builder.Build();
 
