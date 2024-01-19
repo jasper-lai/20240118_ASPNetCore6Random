@@ -1,5 +1,5 @@
-## 非決定性元素 (Non-Deterministic Elements) 的單元測試
-Unit Test for Non-Deterministic Elements in ASP.NET Core 6 MVC   
+## 非決定性元素 (Non-Deterministic Elements) 的單元測試, 以亂數 (Random) 為例
+Unit Test for Non-Deterministic Elements (Random class) in ASP.NET Core 6 MVC   
 
 ## 前言
 
@@ -16,6 +16,8 @@ Unit Test for Non-Deterministic Elements in ASP.NET Core 6 MVC
 **在單元測試中處理非決定性元素時, 一個常用的策略是通過封裝 (Wrapping) 這些元素於可控的介面後, 使用模擬或替身物件 (Test Doubles) 來提供可預測的輸出. 這樣可以減少測試的不確定性, 並提高測試的可靠性和重複性.**   
 
 以下茲以一個 ASP.NET Core 6 MVC 的專案, 以 Random 類別為例, 進行演練.  
+
+<a href="https://github.com/jasper-lai/ASPNetCore6Random" target="_blank">完整範例可由 GitHub 下載.</a>  
 
 ## 演練細節
 
@@ -237,7 +239,7 @@ public void Test_Lottoing_輸入亂數範圍_0_10_預期回傳_1_再接再厲()
 
 本文以非決定性元素 (Non-Deterministic Elements) 中的 Random 類別為範例, 在 ASP.NET Core 6 MVC 專案, 針對 Service 層實作了單元測試.  
 
-**總算實際體驗了一下打包 (Wrap) 的過程, 這個方式主要用在解決必須 "直接相依耦合" 的情境, 但也會造成開發員要習慣使用打包後的介面及類別, 這是比較美中不足的地方.**   
+**總算實際體驗了一下打包 (Wrap) 的過程, 這個方式主要用在解決必須 "直接相依耦合" 的情境, 但也會造成開發人員要習慣使用打包後的介面及類別, 這是比較美中不足的地方.**   
 
 或許有更好的處理方式, 只是受限筆者的能力, 無法作到盡善盡美, 但至少可以供參考.  
 

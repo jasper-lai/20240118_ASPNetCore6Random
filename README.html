@@ -1,0 +1,216 @@
+﻿<body>
+    <div style="font-size: medium;">
+        <!-- <h2 id="非決定性元素-non-deterministic-elements-的單元測試-以亂數-random-為例">非決定性元素 (Non-Deterministic Elements) 的單元測試, 以亂數 (Random) 為例</h2> -->
+        <p>Unit Test for Non-Deterministic Elements (Random class) in ASP.NET Core 6 MVC</p>
+        <h2 id="前言">前言</h2>
+        <p>非決定性元素 (Non-Deterministic Elements) 是指在軟體開發中, 其行為或輸出無法預先確定或不會每次都產生相同結果的元素.<br />
+            這種不確定性通常是由於外部因素, 隨機性, 系統狀態或執行環境的變化所引起.<br />
+            <strong>非決定性元素在測試時可能帶來挑戰, 因為相同的輸入不一定導致相同的輸出.</strong></p>
+        <p>以下是一些常見的非決定性元素範例:</p>
+        <ul>
+            <li>隨機數生成 (如 Random 類別): 隨機數生成器產生的數字是不可預測的, 每次調用可能得到不同的結果.</li>
+            <li>GUID 生成 (如 Guid.NewGuid()) : 全局唯一標識符 (GUID) 生成器每次調用時都會產生一個唯一的值.</li>
+            <li>當前日期和時間 (如 DateTime.Now) : 當前的日期和時間在每次調用時都會不同, 這取決於當前的系統時間.</li>
+        </ul>
+        <p><strong>在單元測試中處理非決定性元素時, 一個常用的策略是通過封裝 (Wrapping) 這些元素於可控的介面後, 使用模擬或替身物件 (Test Doubles) 來提供可預測的輸出. 這樣可以減少測試的不確定性, 並提高測試的可靠性和重複性.</strong></p>
+        <p>以下茲以一個 ASP.NET Core 6 MVC 的專案, 以 Random 類別為例, 進行演練.</p>
+        <p><a href="https://github.com/jasper-lai/ASPNetCore6Random" target="_blank">完整範例可由 GitHub 下載.</a></p>
+        <!--more-->
+        <h2 id="演練細節">演練細節</h2>
+        <h3 id="步驟_1-建立-aspnet-core-6-mvc-專案">步驟_1: 建立 ASP.NET Core 6 MVC 專案</h3>
+        <p>採用 Visual Studio 2022 建立 ASP.NET Core 6 MVC 專案.</p>
+        <h3 id="步驟_2-加入-irandomgenerator-介面-及-randomgenerator-類別">步驟_2: 加入 IRandomGenerator 介面 及 RandomGenerator 類別</h3>
+        <p><strong>以下為 Random 的類別原型, 並未有實作任何的介面, 無法抽象化; 故自行定義一個介面 (interface) 將其重新包裝使用.</strong></p>
+        <pre><code class="language-csharp">namespace System;
+public class Random
+{
+	public Random();
+	public Random(int Seed);
+	public static Random Shared { get; }
+	public virtual int Next();
+	public virtual int Next(int maxValue);
+	public virtual int Next(int minValue, int maxValue);
+	public virtual void NextBytes(byte[] buffer);
+	public virtual void NextBytes(Span&lt;byte&gt; buffer);
+	public virtual double NextDouble();
+	public virtual long NextInt64();
+	public virtual long NextInt64(long maxValue);
+	public virtual long NextInt64(long minValue, long maxValue);
+	public virtual float Nextsingle();
+	protected virtual double Sample();
+}
+</code></pre>
+        <p><strong>以下只抽出 Random 類別的常用方法, 並沒有包含全部.</strong></p>
+        <pre><code class="language-csharp">// 定義介面
+public interface IRandomGenerator
+{
+	int Next();
+	int Next(int maxValue);
+	int Next(int minValue, int maxValue);
+	double NextDouble();
+}
+</code></pre>
+        <pre><code class="language-csharp">// 實作介面
+public class RandomGenerator : IRandomGenerator
+{
+	private readonly Random _random = new();
+
+	public int Next() =&gt; _random.Next();
+	public int Next(int maxValue) =&gt; _random.Next(maxValue);
+	public int Next(int minValue, int maxValue) =&gt; _random.Next(minValue, maxValue);
+	public double NextDouble() =&gt; _random.NextDouble();
+}
+</code></pre>
+        <h3 id="步驟_3-加入-lottocontroller-lottoservice-lottoviewmodel-lottoindexcshtml-以處理樂透開獎的功能">步驟_3: 加入 LottoController, LottoService, LottoViewModel, Lotto/Index.cshtml, 以處理樂透開獎的功能.</h3>
+        <pre><code class="language-csharp">// 建立 LottoController
+public class LottoController : Controller
+{
+	private readonly ILottoService _lottoService;
+
+	public LottoController(ILottoService lottoService)
+	{
+		_lottoService = lottoService;
+	}
+
+	public IActionResult Index()
+	{
+		var result = _lottoService.Lottoing(0, 10);
+		return View(result);
+	}
+}
+</code></pre>
+        <pre><code class="language-csharp">// 定義 ILottoService 介面
+public interface ILottoService
+{
+	LottoViewModel Lottoing(int min, int max)
+}
+
+// 實作 ILottoService 介面
+public class LottoService : ILottoService
+{
+	private readonly IRandomGenerator _randomGenerator;
+
+	public LottoService(IRandomGenerator randomGenerator) 
+	{
+		_randomGenerator = randomGenerator;
+	}
+
+	public LottoViewModel Lottoing(int min, int max)
+	{
+		var result = new LottoViewModel();
+
+		// Random(min, max): 含下界, 不含上界
+		var yourNumber = _randomGenerator.Next(min, max);
+		// 只要餘數是 9, 就代表中獎
+		var message = (yourNumber % 10 == 9) ? &quot;恭喜中獎&quot; : &quot;再接再厲&quot;;
+
+		result.YourNumber = yourNumber;
+		result.Message = message;
+
+		return result;
+	}
+}
+</code></pre>
+        <pre><code class="language-html">&lt;!-- Index.cshtml  --&gt;
+@model  ASPNetCore6Random.ViewModels.LottoViewModel
+
+@{
+    ViewData[&quot;Title&quot;] = &quot;樂透開奬結果&quot;;
+}
+
+&lt;h1&gt;樂透開奬結果&lt;/h1&gt;
+
+&lt;h3&gt;您的號碼: @Model.YourNumber &lt;/h3&gt;
+&lt;h3&gt; @Model.Message &lt;/h3&gt;
+</code></pre>
+        <h3 id="步驟_4-修訂-_layoutcshtml-掛上-樂透開獎-至選單">步驟_4: 修訂 _Layout.cshtml, 掛上 樂透開獎 至選單.</h3>
+        <pre><code class="language-html">&lt;li class=&quot;nav-item&quot;&gt;
+	&lt;a class=&quot;nav-link text-dark&quot; asp-area=&quot;&quot; asp-controller=&quot;Lotto&quot; asp-action=&quot;Index&quot;&gt;樂透開獎&lt;/a&gt;
+&lt;/li&gt;
+</code></pre>
+        <h3 id="步驟_5--將相關的-service-或功能-註冊至-di">步驟_5: 將相關的 service 或功能, 註冊至 DI</h3>
+        <pre><code class="language-csharp">#region 註冊相關的服務
+builder.Services.AddSingleton&lt;IRandomGenerator, RandomGenerator&gt;();
+builder.Services.AddScoped&lt;ILottoService, LottoService&gt;();
+#endregion
+</code></pre>
+        <h3 id="步驟_6-確認一下執行的結果">步驟_6: 確認一下執行的結果</h3>
+        <ul>
+            <li>未中獎
+                <ul>
+                    <li><img src="https://github.com/jasper-lai/ASPNetCore6Random/blob/master/pictures/01-NotGot.png?raw=true" alt="NotGot" /></li>
+                </ul>
+            </li>
+            <li>中獎
+                <ul>
+                    <li><img src="https://github.com/jasper-lai/ASPNetCore6Random/blob/master/pictures/02-Got.png?raw=true" alt="Got" /></li>
+                </ul>
+            </li>
+        </ul>
+        <h3 id="步驟_7-建立單元測試案例">步驟_7: 建立單元測試案例</h3>
+        <p>針對 LottoService 的 Lotting(int min, int max) 方法, 撰寫單元測試.</p>
+        <p>會用到 2 個套件:<br />
+            (1) Moq 4.18.4: 一個常用的 Mock 套件.<br />
+            重要: 自 4.20.0 起, 有一些安全的議題要考量, 所以採用 4.18.4 的版本.</p>
+        <ul>
+            <li><a href="https://medium.com/@michalsitek/critical-security-vulnerability-in-moq-4-20-0-ffd24739cc49" target="_blank">Critical security vulnerability in Moq 4.20.0</a></li>
+        </ul>
+        <p>(2) ExpectedObjects 3.5.4: 用以在單元測試中, 驗證 2 個物件是否相等.</p>
+        <p>以下主要針對實作 ILottoService 介面實體 (LottoService) 的 Lotting(int min, int max) 方法撰寫單元測試案例.</p>
+        <p>LottoService 的建構子, 需要傳入一個實作 IRandomGenerator 的物件, 故我們可以製作一個 mock 的物件, 控制 LottoService 在呼叫 _randomGenerator.Next(min, max) 的回傳值.</p>
+        <ul>
+            <li>第1個案例為: 輸入亂數範圍_0_10_預期回傳_9_恭喜中獎.</li>
+            <li>第2個案例為: 輸入亂數範圍_0_10_預期回傳_1_再接再厲.</li>
+        </ul>
+        <p>以中文描述測試情境, 這樣才容易理解測試目的.</p>
+        <pre><code class="language-csharp">[TestMethod()]
+public void Test_Lottoing_輸入亂數範圍_0_10_預期回傳_9_恭喜中獎()
+{
+	// Arrange
+	var expected = new LottoViewModel()
+	{ YourNumber = 9, Message = &quot;恭喜中獎&quot; }
+				.ToExpectedObject();
+
+	int fixedValue = 9;
+	var mockRandomGenerator = new Mock&lt;IRandomGenerator&gt;();
+	mockRandomGenerator.Setup(r =&gt; r.Next(It.IsAny&lt;int&gt;(), It.IsAny&lt;int&gt;())).Returns(fixedValue);
+
+	// Act
+	var target = new LottoService(mockRandomGenerator.Object);
+	var actual = target.Lottoing(0, 10);
+
+	// Assert
+	expected.ShouldEqual(actual);
+}
+</code></pre>
+        <pre><code class="language-csharp">public void Test_Lottoing_輸入亂數範圍_0_10_預期回傳_1_再接再厲()
+{
+	// Arrange
+	var expected = new LottoViewModel()
+	{ YourNumber = 1, Message = &quot;再接再厲&quot; }
+				.ToExpectedObject();
+
+	int fixedValue = 1;
+	var mockRandomGenerator = new Mock&lt;IRandomGenerator&gt;();
+	mockRandomGenerator.Setup(r =&gt; r.Next(It.IsAny&lt;int&gt;(), It.IsAny&lt;int&gt;())).Returns(fixedValue);
+
+	// Act
+	var target = new LottoService(mockRandomGenerator.Object);
+	var actual = target.Lottoing(0, 10);
+
+	// Assert
+	expected.ShouldEqual(actual);
+}
+</code></pre>
+        <h3 id="步驟_8-檢查測試的結果">步驟_8: 檢查測試的結果</h3>
+        <p><img src="https://github.com/jasper-lai/ASPNetCore6Random/blob/master/pictures/11-TestResult.png?raw=true" alt="TestResult" /></p>
+        <h2 id="結論">結論</h2>
+        <p>本文以非決定性元素 (Non-Deterministic Elements) 中的 Random 類別為範例, 在 ASP.NET Core 6 MVC 專案, 針對 Service 層實作了單元測試.</p>
+        <p><strong>總算實際體驗了一下打包 (Wrap) 的過程, 這個方式主要用在解決必須 &quot;直接相依耦合&quot; 的情境, 但也會造成開發人員要習慣使用打包後的介面及類別, 這是比較美中不足的地方.</strong></p>
+        <p>或許有更好的處理方式, 只是受限筆者的能力, 無法作到盡善盡美, 但至少可以供參考.</p>
+        <h2 id="參考文件">參考文件</h2>
+        <ul>
+            <li><a href="https://learn.microsoft.com/en-us/dotnet/api/system.random?view=net-6.0" target="_blank">(Microsoft) Random Class</a></li>
+        </ul>
+    </div>
+</body>
