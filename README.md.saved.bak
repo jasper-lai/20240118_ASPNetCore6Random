@@ -169,7 +169,15 @@ builder.Services.AddScoped<ILottoService, LottoService>();
 ### 步驟_7: 建立單元測試案例
 
 針對 LottoService 的 Lotting(int min, int max) 方法, 撰寫單元測試.  
+
 會用到 2 個套件:  
+(1) Moq 4.18.4: 一個常用的 Mock 套件.   
+重要: 自 4.20.0 起, 有一些安全的議題要考量, 所以採用 4.18.4 的版本.  
+* <a href="https://medium.com/@michalsitek/critical-security-vulnerability-in-moq-4-20-0-ffd24739cc49" target="_blank">Critical security vulnerability in Moq 4.20.0</a>
+
+(2) ExpectedObjects 3.5.4: 用以在單元測試中, 驗證 2 個物件是否相等.  
+
+
 
 
 

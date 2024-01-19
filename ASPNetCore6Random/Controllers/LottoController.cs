@@ -15,7 +15,7 @@
 
         public IActionResult Index()
         {
-            var result = _lottoService.Lottoing();
+            var result = _lottoService.Lottoing(0, 10);
             return View(result);
         }
     }

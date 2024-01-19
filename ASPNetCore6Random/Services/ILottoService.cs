@@ -4,6 +4,6 @@
 
     public interface ILottoService
     {
-        LottoViewModel Lottoing();
+        LottoViewModel Lottoing(int min, int max);
     }
 }
